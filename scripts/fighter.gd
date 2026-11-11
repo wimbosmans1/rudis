@@ -13,6 +13,10 @@ extends Node2D
 
 ## Sent when this fighter's health reaches zero.
 signal died(fighter: Fighter)
+## Sent when this fighter starts a swing (used for the "whoosh" sound).
+signal attack_started(kind: AttackKind)
+## Sent when a blow reaches this fighter. result is "hit" or "blocked".
+signal got_hit(result: String)
 
 ## The two gladiator types in this prototype. More will follow later.
 enum GladiatorClass { MURMILLO, RETIARIUS }
@@ -132,6 +136,7 @@ func try_attack(kind: AttackKind) -> bool:
 	_current_attack = kind
 	_attack_has_hit = false
 	_enter_state(State.ATTACK)
+	attack_started.emit(kind)
 	return true
 
 
@@ -268,11 +273,13 @@ func receive_hit(attacker: Fighter, damage: float, kind: AttackKind) -> String:
 		if is_exhausted() and not is_dead():
 			_hurt_duration = GUARD_BREAK_TIME  # guard broken!
 			_enter_state(State.HURT)
+		got_hit.emit("blocked")
 		return "blocked"
 
 	_spark_was_blocked = false
 	_flash = FLASH_TIME
 	_knockback = push_direction * 280.0
+	got_hit.emit("hit")
 	_take_damage(damage)
 	if not is_dead():
 		_hurt_duration = HURT_TIME

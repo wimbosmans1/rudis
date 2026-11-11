@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/hud.gd" id="6_hud"]
 [ext_resource type="Script" path="res://scripts/touch_controls.gd" id="7_touch"]
 [ext_resource type="Script" path="res://scripts/menu.gd" id="8_menu"]
+[ext_resource type="Script" path="res://scripts/sfx.gd" id="9_sfx"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -50,3 +51,6 @@ script = ExtResource("7_touch")
 
 [node name="Menu" type="CanvasLayer" parent="."]
 script = ExtResource("8_menu")
+
+[node name="Sfx" type="Node" parent="."]
+script = ExtResource("9_sfx")

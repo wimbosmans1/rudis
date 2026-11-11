@@ -22,7 +22,10 @@ func _draw() -> void:
 		for i in 60:
 			var x := i * 22.0 + rng.randf_range(0.0, 12.0)
 			var y := 225.0 + row * 34.0 + rng.randf_range(-4.0, 4.0)
-			draw_circle(Vector2(x, y), 7.0, crowd_colors[rng.randi() % crowd_colors.size()])
+			var color: Color = crowd_colors[rng.randi() % crowd_colors.size()]
+			if x > WIDTH - 7.0:
+				continue  # stay inside the picture (on phones the edge is visible)
+			draw_circle(Vector2(x, y), 7.0, color)
 	# Stone wall (podium) around the arena floor, with a few block lines
 	draw_rect(Rect2(0, 400, WIDTH, FLOOR_Y - 400), Color(0.78, 0.72, 0.62))
 	for x in range(0, int(WIDTH), 120):

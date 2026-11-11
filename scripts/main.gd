@@ -18,6 +18,10 @@ signal round_finished(player_won: bool)
 @onready var hud: CanvasLayer = $HUD
 @onready var touch_controls: CanvasLayer = $TouchControls
 @onready var menu: CanvasLayer = $Menu
+@onready var sfx: Node = $Sfx
+
+## Colour around the arena on phones (behind the touch buttons).
+const STRIP_COLOR := Color(0.13, 0.09, 0.07)
 
 var round_active := false
 
@@ -33,9 +37,17 @@ func _ready() -> void:
 	ai_controller.fighter = opponent
 	ai_controller.target = player
 	hud.setup(player, opponent)
+	sfx.watch(player)
+	sfx.watch(opponent)
 
-	menu.start_pressed.connect(start_round)
-	menu.restart_pressed.connect(start_round)
+	menu.start_pressed.connect(_on_start_button)
+	menu.restart_pressed.connect(_on_start_button)
+
+	# On phones the screen is used edge to edge: the arena on top and a strip
+	# with big buttons below it. On a PC the picture stays exactly as it was.
+	if touch_controls.is_wanted():
+		use_touch_layout()
+	get_tree().root.size_changed.connect(apply_layout)
 
 	# Show the fighters standing in the arena behind the title screen.
 	_reset_fighters()
@@ -49,6 +61,29 @@ func start_round() -> void:
 	menu.hide_all()
 	round_active = true
 	_set_controls_enabled(true)
+
+
+## Switches to the phone layout (arena above, buttons below).
+func use_touch_layout() -> void:
+	get_window().content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+	RenderingServer.set_default_clear_color(STRIP_COLOR)
+	apply_layout()
+
+
+## Shrinks and moves the arena (and the health bars with it) into the space
+## the touch controls leave free. Runs again when the phone is turned.
+func apply_layout() -> void:
+	var area: Rect2 = touch_controls.update_layout()
+	var zoom := area.size.x / Arena.WIDTH
+	position = area.position
+	scale = Vector2(zoom, zoom)
+	hud.offset = area.position
+	hud.scale = Vector2(zoom, zoom)
+
+
+func _on_start_button() -> void:
+	sfx.unlock()  # iPhone: sound may only start from inside a tap
+	start_round()
 
 
 func _reset_fighters() -> void:

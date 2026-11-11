@@ -38,6 +38,43 @@ func _setup_duel() -> void:
 	await _wait(2)
 
 
+func _touch(finger: int, at: Vector2, down: bool) -> void:
+	var event := InputEventScreenTouch.new()
+	event.index = finger
+	event.position = at
+	event.pressed = down
+	root.push_input(event, true)  # position is already in game pixels
+
+
+## Tries the layout maths on a few real phone screens (sizes in game pixels,
+## as the game sees them with the "expand" setting) and checks the rules.
+func _check_touch_layouts() -> void:
+	var script: Script = load("res://scripts/touch_controls.gd")
+	var screens := {
+		"iPhone 14 landscape": [Vector2(1787, 720), 1787.0 / 844.0],
+		"iPhone SE landscape": [Vector2(1720, 720), 1720.0 / 667.0],
+		"iPhone 14 portrait": [Vector2(1280, 2400), 1280.0 / 390.0],
+		"iPad landscape": [Vector2(1280, 960), 1280.0 / 1024.0],
+	}
+	for screen_name in screens:
+		var view: Vector2 = screens[screen_name][0]
+		var px_per_pt: float = screens[screen_name][1]
+		var layout: Dictionary = script.compute_layout(view, px_per_pt)
+		var arena: Rect2 = layout["arena"]
+		var rects: Array = layout["buttons"].values()
+		var ok := arena.size.x > 0.0 and Rect2(Vector2.ZERO, view).encloses(arena)
+		var smallest := INF
+		for i in rects.size():
+			var r: Rect2 = rects[i]
+			smallest = minf(smallest, minf(r.size.x, r.size.y) / px_per_pt)
+			ok = ok and not r.intersects(arena) and Rect2(Vector2.ZERO, view).encloses(r)
+			for j in range(i + 1, rects.size()):
+				ok = ok and not r.intersects(rects[j])
+		ok = ok and smallest >= 60.0
+		_check(ok, "%s: %d-column buttons, smallest %.0f pt, arena %.0f%% of width" % [
+			screen_name, layout["columns"], smallest, 100.0 * arena.size.x / view.x])
+
+
 func _run() -> void:
 	await _wait(2)
 	var player: Fighter = _main.player
@@ -62,6 +99,8 @@ func _run() -> void:
 	await _wait(40)
 	var clean_damage := opponent.max_health - opponent.health
 	_check(clean_damage > 0.0, "high attack hits (damage %.1f)" % clean_damage)
+	_check(_main.sfx.played.has("swing") and _main.sfx.played.has("hit"),
+		"swing and hit sounds play (%s)" % [_main.sfx.played])
 
 	# 4. Blocking reduces damage.
 	await _setup_duel()
@@ -73,6 +112,7 @@ func _run() -> void:
 	_check(blocked_damage > 0.0 and blocked_damage < clean_damage,
 		"block reduces damage (%.1f instead of %.1f)" % [blocked_damage, clean_damage])
 	_check(opponent.stamina < opponent.max_stamina, "blocking costs stamina")
+	_check(_main.sfx.played.has("clang"), "blocked attack plays the clang sound")
 	opponent.wants_block = false
 
 	# 5. Dodging avoids the hit.
@@ -120,6 +160,36 @@ func _run() -> void:
 	_check(player.health == player.max_health and opponent.health == opponent.max_health,
 		"restart resets health")
 	_check(not _main.menu.is_result_visible(), "restart hides the result screen")
+
+	# 10. Phone layout: big buttons, never on top of the arena.
+	_check_touch_layouts()
+	var touch: CanvasLayer = _main.touch_controls
+	touch.force_touch = true
+	_main.apply_layout()
+	touch.visible = true
+	var area: Rect2 = touch.arena_rect
+	var overlap := false
+	for action in touch.buttons:
+		var button: TouchScreenButton = touch.buttons[action]
+		var size: Vector2 = (button.shape as RectangleShape2D).size
+		if Rect2(button.position - size / 2.0, size).intersects(area):
+			overlap = true
+	_check(not overlap and _main.scale.x < 1.0,
+		"touch layout shrinks the arena (x%.2f) and keeps buttons off it" % _main.scale.x)
+	# A finger on the HIGH button presses the high attack, and a second finger
+	# on > walks at the same time.
+	var high: TouchScreenButton = touch.buttons["attack_high"]
+	var right: TouchScreenButton = touch.buttons["move_right"]
+	_touch(0, high.position, true)
+	_touch(1, right.position, true)
+	await _wait(1)
+	_check(Input.is_action_pressed("attack_high") and Input.is_action_pressed("move_right"),
+		"two fingers press HIGH and > together")
+	_touch(0, high.position, false)
+	_touch(1, right.position, false)
+	touch.force_touch = false
+	touch.visible = false
+	_main.apply_layout()
 
 	print("\n%s: %d check(s) failed" % ["FAILED" if _failures > 0 else "ALL PASSED", _failures])
 	quit(1 if _failures > 0 else 0)

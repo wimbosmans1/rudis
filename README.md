@@ -29,12 +29,21 @@ purpose; pixel art comes later.
 - Title screen ("RUDIS" + Start), and "Victory" or "Defeat" with a Restart
   button at the end of the round.
 - On-screen touch buttons that appear automatically on phones and tablets.
+  They sit in their own strip **below** the arena (the arena gets a bit
+  smaller), so your thumbs never cover the fight. They are big (about 84 x 92
+  points, Apple's minimum is 44) and light up while pressed. You can use two
+  fingers at once (walk and attack). Phone sideways: one row; phone upright:
+  the attack buttons form a 2 x 2 block. On a PC nothing changes.
+- Sound effects: a *whoosh* on every swing, a *thud* when a blow lands and a
+  metallic *clang* when it is blocked. On iPhone, sound starts after your
+  first tap (Start). If you hear nothing, check the phone's silent switch:
+  iPhones mute web pages in silent mode.
 
 ## Controls
 
 | Action              | Keyboard              | Touch screen   |
 |---------------------|-----------------------|----------------|
-| Walk left / right   | A / D or Left / Right | `<` and `>`    |
+| Walk left / right   | A / D or Left / Right | ◀ and ▶ (left thumb) |
 | High attack         | J or Up               | HIGH           |
 | Low attack          | K or Down             | LOW            |
 | Block (hold)        | L or Shift            | BLOCK (hold)   |
@@ -88,12 +97,23 @@ From the command line (this is how it is done now):
 godot --headless --path . --export-release "Web" docs/index.html
 ```
 
+## Sounds
+
+The three sounds in `sounds/` (`swing.wav`, `hit.wav`, `clang.wav`) are made
+from scratch by the script `tools/make_sounds.py` out of noise and sine
+waves; no recordings were used. They were made for this project and are
+free to use (**CC0 / public domain**). To change one, edit the numbers in
+the script and run `python3 tools/make_sounds.py`, or replace a file with
+another sound of the same name. Loudness is set in `scripts/sfx.gd`.
+
 ## Automatic check
 
 `tests/smoke_test.gd` starts the game without a window and checks the rules:
 attacks hit, blocks reduce damage, dodges avoid hits, stamina is spent and
-refills, a full computer-vs-computer fight ends with Victory/Defeat, and
-Restart works.
+refills, the sounds play, a full computer-vs-computer fight ends with
+Victory/Defeat, Restart works, and the phone layout keeps every button off
+the arena on several iPhone / iPad screen sizes (and two fingers can press
+two buttons at once).
 
 ```
 godot --headless --path . --import
@@ -119,9 +139,14 @@ rudis/
 │   ├── arena.gd          Draws the background (sky, crowd, wall, sand)
 │   ├── hud.gd            Health and stamina bars
 │   ├── menu.gd           Title screen and result screen
-│   └── touch_controls.gd On-screen buttons for phones
+│   ├── sfx.gd            Sound effects (swing, hit, clang)
+│   └── touch_controls.gd On-screen buttons for phones, and the phone layout
+├── sounds/               The sound effects (made by tools/make_sounds.py)
+├── tools/
+│   └── make_sounds.py    Makes the sound effects
 ├── tests/
-│   └── smoke_test.gd     Automatic check (see above)
+│   ├── smoke_test.gd     Automatic check (see above)
+│   └── touch_screenshot.gd  Picture of the phone layout, without a phone
 └── docs/                 The exported web version (what the browser loads)
 ```
 
@@ -132,5 +157,5 @@ place. The hidden `.godot/` folder is Godot's cache and is not stored in Git.
 
 - High and low blocks that must match the attack height.
 - Signature moves: the retiarius net throw, the murmillo shield charge.
-- Pixel-art gladiators and simple sounds.
+- Pixel-art gladiators, more sounds (crowd, music).
 - A violence setting (family / light / realistic); this prototype is family mode.
