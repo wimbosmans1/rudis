@@ -1,0 +1,52 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/arena.gd" id="2_arena"]
+[ext_resource type="Script" path="res://scripts/player_controller.gd" id="3_player"]
+[ext_resource type="Script" path="res://scripts/ai_controller.gd" id="4_ai"]
+[ext_resource type="Script" path="res://scripts/fighter.gd" id="5_fighter"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="6_hud"]
+[ext_resource type="Script" path="res://scripts/touch_controls.gd" id="7_touch"]
+[ext_resource type="Script" path="res://scripts/menu.gd" id="8_menu"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Arena" type="Node2D" parent="."]
+script = ExtResource("2_arena")
+
+[node name="PlayerController" type="Node" parent="."]
+script = ExtResource("3_player")
+
+[node name="AIController" type="Node" parent="."]
+script = ExtResource("4_ai")
+
+[node name="Player" type="Node2D" parent="."]
+position = Vector2(400, 600)
+script = ExtResource("5_fighter")
+display_name = "You - Murmillo"
+body_color = Color(0.78, 0.16, 0.14, 1)
+max_health = 100.0
+move_speed = 210.0
+reach = 115.0
+block_strength = 0.85
+
+[node name="Opponent" type="Node2D" parent="."]
+position = Vector2(880, 600)
+script = ExtResource("5_fighter")
+display_name = "Retiarius"
+gladiator_class = 1
+body_color = Color(0.17, 0.36, 0.8, 1)
+max_health = 85.0
+move_speed = 260.0
+reach = 150.0
+block_strength = 0.6
+
+[node name="HUD" type="CanvasLayer" parent="."]
+script = ExtResource("6_hud")
+
+[node name="TouchControls" type="CanvasLayer" parent="."]
+script = ExtResource("7_touch")
+
+[node name="Menu" type="CanvasLayer" parent="."]
+script = ExtResource("8_menu")

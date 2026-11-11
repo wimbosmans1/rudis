@@ -1,0 +1,55 @@
+; Engine configuration file.
+; This is Godot's main settings file for the Rudis project.
+; You normally change these settings in the editor via Project > Project Settings,
+; but it is plain text, so you can also read it here.
+
+config_version=5
+
+[application]
+
+config/name="Rudis"
+config/description="Rudis: From Slave to Legend. Phase 0 prototype: one arena duel."
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+window/handheld/orientation=4
+
+[input]
+
+move_left={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":65), Object(InputEventKey,"physical_keycode":4194319)]
+}
+move_right={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":68), Object(InputEventKey,"physical_keycode":4194321)]
+}
+attack_high={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":74), Object(InputEventKey,"physical_keycode":4194320)]
+}
+attack_low={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":75), Object(InputEventKey,"physical_keycode":4194322)]
+}
+block={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":76), Object(InputEventKey,"physical_keycode":4194325)]
+}
+dodge={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":32)]
+}
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.45, 0.62, 0.82, 1)

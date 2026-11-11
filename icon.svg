@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Rudis icon: a wooden training sword on a dark red background -->
+  <rect width="128" height="128" rx="20" fill="#7a1f1a"/>
+  <g transform="rotate(-45 64 64)">
+    <rect x="58" y="14" width="12" height="70" rx="5" fill="#c8964f" stroke="#5c3b17" stroke-width="3"/>
+    <rect x="42" y="82" width="44" height="10" rx="4" fill="#8a5a2b" stroke="#5c3b17" stroke-width="3"/>
+    <rect x="59" y="92" width="10" height="20" rx="3" fill="#6b4320"/>
+    <circle cx="64" cy="116" r="6" fill="#8a5a2b"/>
+  </g>
+</svg>

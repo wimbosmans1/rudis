@@ -1,0 +1,11 @@
+# Godot 4 keeps its cache and imported files here. It is rebuilt
+# automatically when you open the project, so it should not be in Git.
+.godot/
+
+# Android build template (only needed if we ever export for Android)
+/android/
+
+# Files some editors and operating systems create
+*.tmp
+.DS_Store
+Thumbs.db
