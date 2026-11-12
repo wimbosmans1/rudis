@@ -1,16 +1,27 @@
 extends CanvasLayer
 ## Big on-screen buttons for phones and tablets (for example an iPhone).
 ##
-## They only appear on devices with a touch screen. On those devices the
-## arena is made a bit smaller and moved up, and the buttons get their own
-## strip at the bottom of the screen, so your thumbs never cover the fight:
+## They only appear on devices with a touch screen. The buttons always sit
+## OUTSIDE the arena, so your thumbs never cover the fight. There are two
+## layouts, and the game picks the one that leaves the bigger arena:
+##
+## Phone sideways (landscape): the buttons go in the dark edges left and
+## right of the arena, and the arena uses (almost) the full screen height:
+##
+##   +-----+--------------------------+--------+
+##   | [<] |                          | [HIGH] |
+##   |     |      the arena (fight)   | [LOW]  |
+##   | [>] |                          | [BLOCK]|
+##   |     |                          | [ROLL] |
+##   +-----+--------------------------+--------+
+##
+## Phone upright (portrait) and iPad: the buttons get a strip under the arena:
 ##
 ##   +--------------------------------------+
 ##   |            the arena (fight)         |
 ##   +--------------------------------------+
-##   | [<] [>]           [HIGH][LOW][BLOCK][ROLL] |   <- landscape
-##
-## In portrait (phone held upright) the right-hand buttons form a 2 x 2 block.
+##   | [<] [>]                [HIGH] [LOW]  |
+##   |                        [BLOCK][ROLL] |
 ##
 ## Each button "presses" the same input action as the keyboard (see the Input
 ## Map), so the player controller does not need to know whether you use keys
@@ -29,6 +40,19 @@ const EDGE_PT := 12.0            ## Space to the left / right / top of the strip
 const BOTTOM_PT := 18.0          ## Space at the bottom (the iPhone "home bar").
 ## The button strip never takes more than this part of the screen height.
 const MAX_STRIP_SHARE := 0.42
+
+## Side layout (phone sideways). Sizes in points.
+const SIDE_EDGE_PT := 10.0       ## Space between a button and the screen edge.
+const SIDE_INNER_PT := 8.0       ## Space between a button and the arena.
+const SIDE_TOP_PT := 8.0         ## Space above the top button.
+const SIDE_BOTTOM_PT := 12.0     ## Space below the bottom button (home bar).
+const SIDE_GAP_PT := 12.0        ## Preferred space between two buttons...
+const SIDE_MIN_GAP_PT := 6.0     ## ...made smaller (to this) on short screens.
+const SIDE_MIN_WIDTH_PT := 76.0  ## The side buttons are at least this wide...
+const SIDE_MAX_WIDTH_PT := 120.0 ## ...and at most this wide.
+const SIDE_MAX_HEIGHT_PT := 110.0 ## HIGH / LOW / BLOCK / ROLL at most this tall.
+## Buttons should be at least this big (Apple's minimum is 44 points).
+const MIN_BUTTON_PT := 60.0
 
 ## The size of the arena drawing (the game's "virtual screen").
 const ARENA_SIZE := Vector2(1280, 720)
@@ -85,8 +109,66 @@ func update_layout() -> Rect2:
 
 ## The layout maths, separate so the automatic test can try many screens.
 ## view: screen size in game pixels. px_per_pt: game pixels per iPhone point.
-## Returns {"arena": Rect2, "buttons": {action name: Rect2}, "columns": int}.
+## Tries both layouts and keeps the one with the bigger arena (as long as its
+## buttons are still big enough).
+## Returns {"arena": Rect2, "buttons": {action name: Rect2}, "columns": int,
+## "mode": "side" or "strip"}.
 static func compute_layout(view: Vector2, px_per_pt: float) -> Dictionary:
+	var strip := _strip_layout(view, px_per_pt)
+	var side := _side_layout(view, px_per_pt)
+	if not side.is_empty() and side["arena"].get_area() > strip["arena"].get_area():
+		return side
+	return strip
+
+
+## Phone sideways: < and > on the left, HIGH LOW BLOCK ROLL in a column on
+## the right, the arena in between at (almost) full height.
+## Returns {} if the buttons would get too small on this screen.
+static func _side_layout(view: Vector2, px_per_pt: float) -> Dictionary:
+	var u := px_per_pt
+	var view_pt := view / u
+	# Height of the four right-hand buttons, with smaller gaps if needed.
+	var free_pt := view_pt.y - SIDE_TOP_PT - SIDE_BOTTOM_PT
+	var gap_pt := SIDE_GAP_PT
+	if (free_pt - 3.0 * gap_pt) / 4.0 < MIN_BUTTON_PT:
+		gap_pt = maxf(SIDE_MIN_GAP_PT, (free_pt - 4.0 * MIN_BUTTON_PT) / 3.0)
+	var action_h_pt := minf(SIDE_MAX_HEIGHT_PT, (free_pt - 3.0 * gap_pt) / 4.0)
+	if action_h_pt < MIN_BUTTON_PT:
+		return {}
+	# The arena: as tall as the screen, unless the edges would then be too
+	# narrow for the buttons.
+	var min_gutter := (SIDE_EDGE_PT + SIDE_MIN_WIDTH_PT + SIDE_INNER_PT) * u
+	var scale := minf(view.y / ARENA_SIZE.y, (view.x - 2.0 * min_gutter) / ARENA_SIZE.x)
+	if scale <= 0.0:
+		return {}
+	var arena_size := ARENA_SIZE * scale
+	var arena := Rect2((view - arena_size) / 2.0, arena_size)
+	var gutter := arena.position.x
+	var width := minf(SIDE_MAX_WIDTH_PT * u, gutter - (SIDE_EDGE_PT + SIDE_INNER_PT) * u)
+
+	var rects := {}
+	var gap := gap_pt * u
+	var top := SIDE_TOP_PT * u
+	var bottom := view.y - SIDE_BOTTOM_PT * u
+	# Left edge: < on top, > below it, each half of the height. The buttons
+	# hug the screen edge, where the thumb is.
+	var left_x := SIDE_EDGE_PT * u
+	var move_h := (bottom - top - gap) / 2.0
+	rects["move_left"] = Rect2(left_x, top, width, move_h)
+	rects["move_right"] = Rect2(left_x, top + move_h + gap, width, move_h)
+	# Right edge: HIGH, LOW, BLOCK, ROLL from top to bottom, centred in height.
+	var right_x := view.x - SIDE_EDGE_PT * u - width
+	var h := action_h_pt * u
+	var column_h := 4.0 * h + 3.0 * gap
+	var y := top + (bottom - top - column_h) / 2.0
+	for info in ACTION_BUTTONS:
+		rects[info["action"]] = Rect2(right_x, y, width, h)
+		y += h + gap
+	return {"arena": arena, "buttons": rects, "columns": 1, "mode": "side"}
+
+
+## Phone upright / iPad: a strip with all buttons under the arena.
+static func _strip_layout(view: Vector2, px_per_pt: float) -> Dictionary:
 	var available_pt := view.x / px_per_pt
 	# Try all four action buttons in one row (made at most 15% smaller to
 	# fit); if that is still too wide, use 2 x 2.
@@ -126,7 +208,7 @@ static func compute_layout(view: Vector2, px_per_pt: float) -> Dictionary:
 		var row := i / columns
 		rects[ACTION_BUTTONS[i]["action"]] = Rect2(
 			right_start + column * (action_w + gap), block_top + row * (h + gap), action_w, h)
-	return {"arena": arena, "buttons": rects, "columns": columns}
+	return {"arena": arena, "buttons": rects, "columns": columns, "mode": "strip"}
 
 
 static func _row_width_pt(columns: int) -> float:

@@ -29,11 +29,17 @@ purpose; pixel art comes later.
 - Title screen ("RUDIS" + Start), and "Victory" or "Defeat" with a Restart
   button at the end of the round.
 - On-screen touch buttons that appear automatically on phones and tablets.
-  They sit in their own strip **below** the arena (the arena gets a bit
-  smaller), so your thumbs never cover the fight. They are big (about 84 x 92
-  points, Apple's minimum is 44) and light up while pressed. You can use two
-  fingers at once (walk and attack). Phone sideways: one row; phone upright:
-  the attack buttons form a 2 x 2 block. On a PC nothing changes.
+  They always sit **outside** the arena, so your thumbs never cover the fight,
+  and they light up while pressed. You can use two fingers at once (walk and
+  attack).
+  - Phone sideways: ◀ and ▶ are stacked in the dark edge on the **left**, and
+    HIGH, LOW, BLOCK and ROLL form a column in the edge on the **right**. The
+    arena uses the full height of the screen (on an iPhone 14 in Safari about
+    605 x 340 points, before it was 402 x 226). Buttons are at least 60
+    points (Apple's minimum is 44); on an iPhone 14 about 100 x 71.
+  - Phone upright and iPad: the buttons sit in a strip **below** the arena;
+    the attack buttons form a 2 x 2 block on a phone.
+  - On a PC without a touch screen nothing changes.
 - Sound effects: a *whoosh* on every swing, a *thud* when a blow lands and a
   metallic *clang* when it is blocked. On iPhone, sound starts after your
   first tap (Start). If you hear nothing, check the phone's silent switch:
@@ -57,7 +63,7 @@ Holding a direction while rolling rolls that way; otherwise you roll backwards.
 
 The web version is in the `docs/` folder. When GitHub Pages is switched on
 for this repository it can be played from a link, on a PC or in Safari on an
-iPhone (turn the phone sideways). Nothing needs to be installed.
+iPhone (turn the phone sideways for the biggest arena). Nothing needs to be installed.
 
 ## Open the project in Godot (later, when you want to tinker)
 
@@ -112,8 +118,9 @@ another sound of the same name. Loudness is set in `scripts/sfx.gd`.
 attacks hit, blocks reduce damage, dodges avoid hits, stamina is spent and
 refills, the sounds play, a full computer-vs-computer fight ends with
 Victory/Defeat, Restart works, and the phone layout keeps every button off
-the arena on several iPhone / iPad screen sizes (and two fingers can press
-two buttons at once).
+the arena and on screen on several iPhone / iPad screen sizes (sideways:
+buttons left and right, arena full height), and that two fingers can press
+two buttons at once.
 
 ```
 godot --headless --path . --import

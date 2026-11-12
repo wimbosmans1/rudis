@@ -50,19 +50,24 @@ func _touch(finger: int, at: Vector2, down: bool) -> void:
 ## as the game sees them with the "expand" setting) and checks the rules.
 func _check_touch_layouts() -> void:
 	var script: Script = load("res://scripts/touch_controls.gd")
+	# name: [screen in game pixels, game pixels per point, expected layout]
 	var screens := {
-		"iPhone 14 landscape": [Vector2(1787, 720), 1787.0 / 844.0],
-		"iPhone SE landscape": [Vector2(1720, 720), 1720.0 / 667.0],
-		"iPhone 14 portrait": [Vector2(1280, 2400), 1280.0 / 390.0],
-		"iPad landscape": [Vector2(1280, 960), 1280.0 / 1024.0],
+		"iPhone 14 landscape": [Vector2(1787, 720), 1787.0 / 844.0, "side"],
+		"iPhone 14 landscape, full screen": [Vector2(1558, 720), 1558.0 / 844.0, "side"],
+		"iPhone SE landscape": [Vector2(1720, 720), 1720.0 / 667.0, "side"],
+		"iPhone 14 Pro Max landscape": [Vector2(1813, 720), 1813.0 / 932.0, "side"],
+		"iPhone 14 portrait": [Vector2(1280, 2400), 1280.0 / 390.0, "strip"],
+		"iPad landscape": [Vector2(1280, 960), 1280.0 / 1024.0, "strip"],
 	}
 	for screen_name in screens:
 		var view: Vector2 = screens[screen_name][0]
 		var px_per_pt: float = screens[screen_name][1]
+		var expected_mode: String = screens[screen_name][2]
 		var layout: Dictionary = script.compute_layout(view, px_per_pt)
 		var arena: Rect2 = layout["arena"]
 		var rects: Array = layout["buttons"].values()
 		var ok := arena.size.x > 0.0 and Rect2(Vector2.ZERO, view).encloses(arena)
+		ok = ok and rects.size() == 6 and layout["mode"] == expected_mode
 		var smallest := INF
 		for i in rects.size():
 			var r: Rect2 = rects[i]
@@ -71,8 +76,25 @@ func _check_touch_layouts() -> void:
 			for j in range(i + 1, rects.size()):
 				ok = ok and not r.intersects(rects[j])
 		ok = ok and smallest >= 60.0
-		_check(ok, "%s: %d-column buttons, smallest %.0f pt, arena %.0f%% of width" % [
-			screen_name, layout["columns"], smallest, 100.0 * arena.size.x / view.x])
+		# Sideways, the arena should use (almost) the whole screen height.
+		if expected_mode == "side":
+			ok = ok and arena.size.y >= 0.9 * view.y
+		_check(ok, "%s: %s layout, smallest button %.0f pt, arena %.0f x %.0f pt (%.0f%% of height)" % [
+			screen_name, layout["mode"], smallest, arena.size.x / px_per_pt, arena.size.y / px_per_pt,
+			100.0 * arena.size.y / view.y])
+	# iPhone 14 sideways in Safari: the arena must be clearly bigger than the
+	# old layout with the strip below it (about 402 x 226 points).
+	var iphone: Dictionary = script.compute_layout(Vector2(1787, 720), 1787.0 / 844.0)
+	var arena_pt: Vector2 = iphone["arena"].size / (1787.0 / 844.0)
+	_check(arena_pt.x >= 560.0 and arena_pt.y >= 315.0,
+		"iPhone 14 landscape arena is bigger than before (%.0f x %.0f pt, was 402 x 226)" % [arena_pt.x, arena_pt.y])
+	# Left thumb gets < and > (left edge), right thumb the four actions.
+	var b: Dictionary = iphone["buttons"]
+	var mid := 1787.0 / 2.0
+	_check(b["move_left"].end.x < mid and b["move_right"].end.x < mid
+		and b["move_left"].end.y <= b["move_right"].position.y
+		and b["attack_high"].position.x > mid and b["dodge"].position.x > mid,
+		"iPhone 14 landscape: < > stacked on the left, HIGH LOW BLOCK ROLL on the right")
 
 
 func _run() -> void:

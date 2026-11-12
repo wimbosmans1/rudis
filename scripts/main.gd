@@ -43,8 +43,8 @@ func _ready() -> void:
 	menu.start_pressed.connect(_on_start_button)
 	menu.restart_pressed.connect(_on_start_button)
 
-	# On phones the screen is used edge to edge: the arena on top and a strip
-	# with big buttons below it. On a PC the picture stays exactly as it was.
+	# On phones the screen is used edge to edge: the arena plus big buttons
+	# beside it (phone sideways) or below it (phone upright). On a PC the picture stays exactly as it was.
 	if touch_controls.is_wanted():
 		use_touch_layout()
 	get_tree().root.size_changed.connect(apply_layout)
@@ -63,7 +63,7 @@ func start_round() -> void:
 	_set_controls_enabled(true)
 
 
-## Switches to the phone layout (arena above, buttons below).
+## Switches to the phone layout (buttons beside or below the arena).
 func use_touch_layout() -> void:
 	get_window().content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
 	RenderingServer.set_default_clear_color(STRIP_COLOR)
